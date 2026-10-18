@@ -3,11 +3,6 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
 
-    // Budget with Elias: each signed-in person can only read and write their own data.
-    match /users/{uid}/{document=**} {
-      allow read, write: if signedIn() && request.auth.uid == uid;
-    }
-
     // To-dos with Elias: a shared list ("space") and its to-do items.
     match /spaces/{spaceId} {
       function isMember() { return signedIn() && request.auth.uid in resource.data.members; }
