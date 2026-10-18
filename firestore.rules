@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+
+    // Budget with Elias: each signed-in person can only read and write their own data.
+    match /users/{uid}/{document=**} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // To-dos with Elias: a shared list ("space") and its to-do items.
+    match /spaces/{spaceId} {
+      function isMember() { return signedIn() && request.auth.uid in resource.data.members; }
+      // Someone with the invite link (the space id) may add only themselves to the members.
+      function isJoining() {
+        return signedIn()
+          && !(request.auth.uid in resource.data.members)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'memberInfo'])
+          && request.resource.data.members.toSet() == resource.data.members.toSet().union([request.auth.uid].toSet())
+          && request.resource.data.memberInfo.diff(resource.data.memberInfo).affectedKeys().hasOnly([request.auth.uid]);
+      }
+
+      allow read: if isMember();
+      allow create: if signedIn() && request.resource.data.members == [request.auth.uid]
+        && request.resource.data.owner == request.auth.uid;
+      allow update: if (isMember() && request.resource.data.members.size() > 0) || isJoining();
+      allow delete: if signedIn() && resource.data.owner == request.auth.uid;
+
+      match /items/{itemId} {
+        allow read, write: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/spaces/$(spaceId)).data.members;
+      }
+    }
+  }
+}
