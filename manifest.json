@@ -1,0 +1,13 @@
+{
+  "name": "To-dos with Elias",
+  "short_name": "To-dos",
+  "description": "Shared to-do lists with priorities and categories.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f9",
+  "theme_color": "#257a70",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
